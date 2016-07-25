@@ -15,7 +15,7 @@ namespace AppServiceHelpers.Tables
 
 	}
 
-	public class BaseTableDataStore<T> : BaseTableDataStore, ITableDataStore<T> where T : Models.EntityData
+	public class BaseTableDataStore<T> : BaseTableDataStore, ITableDataStore<T> where T : Models.EntityDataAlwaysLatest
     {
 		IEasyMobileServiceClient serviceClient;
         string identifier = typeof(T).Name;

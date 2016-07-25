@@ -1,22 +1,15 @@
 ﻿using Microsoft.WindowsAzure.MobileServices;
 using Newtonsoft.Json;
 using System;
+using System.ComponentModel;
+using System.Collections.Generic;
 
 namespace AppServiceHelpers.Models
 {
-    public class EntityData
+	public class EntityData : EntityDataAlwaysLatest
     {
-        [JsonProperty(PropertyName = "id")]
-        public string Id { get; set; }
-
-        [JsonProperty(PropertyName = "createdAt")]
-        public DateTimeOffset CreatedAt { get; set; }
-
-        [UpdatedAt]
-        public DateTimeOffset UpdatedAt { get; set; }
-
         [Version]
         public string AzureVersion { get; set; }
-    }
+	}
 }
 

@@ -16,8 +16,8 @@ namespace AppServiceHelpers.Abstractions
 		MobileServiceClient MobileService { get; set; }
 
 		void Initialize(string url);
-		void RegisterTable<A>() where A : EntityData;
-		ITableDataStore<T> Table<T>() where T : EntityData;
+		void RegisterTable<A>() where A : EntityDataAlwaysLatest;
+		ITableDataStore<T> Table<T>() where T : EntityDataAlwaysLatest;
 		Task FinalizeSchema();
 	}
 }

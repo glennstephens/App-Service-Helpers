@@ -11,10 +11,11 @@ using Xamarin.Forms;
 
 namespace AppServiceHelpers.Forms
 {
-    public class BaseAzureViewModel<T> where T : EntityData
+	public class BaseAzureViewModel<T> : INotifyPropertyChanged where T : EntityDataAlwaysLatest
     {
-        IEasyMobileServiceClient client;
-        ITableDataStore<T> table;
+        protected IEasyMobileServiceClient client;
+
+        ITableDataStore<T> table;	
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:Azure.Mobile.Forms.BaseAzureViewModel`1"/> class.
@@ -44,25 +45,53 @@ namespace AppServiceHelpers.Forms
 		/// Adds an item to the table.
 		/// </summary>
 		/// <param name="item">The item to add to the table.</param>
-		public async Task AddItemAsync(T item)
+		public virtual async Task AddItemAsync(T item) 
         {
-            await table.AddAsync(item);
+			await table.AddAsync(item);
+
+			Device.BeginInvokeOnMainThread(() =>
+			{
+				items.Add(item);
+			});
         }
+
+		/// <summary>
+		/// Creates and adds a new item to the table
+		/// </summary>
+		/// <returns>The new item async.</returns>
+		public virtual async Task<T> AddNewItemAsync()
+		{
+			var item = (T)Activator.CreateInstance(typeof(T));
+
+			await table.AddAsync(item);
+
+			Device.BeginInvokeOnMainThread(() =>
+			{
+				items.Add(item);
+			});
+
+			return item;
+		}
 
 		/// <summary>
 		/// Deletes an item from the table.
 		/// </summary>
 		/// <param name="item">The item to delete from the table.</param>
-		public async Task DeleteItemAsync(T item)
+		public virtual async Task DeleteItemAsync(T item)
         {
             await table.DeleteAsync(item);
+
+			Device.BeginInvokeOnMainThread(() =>
+			{
+				items.Remove(item);
+			});
         }
 
 		/// <summary>
 		/// Updates an item in the table.
 		/// </summary>
 		/// <param name="item">The item to update in the table.</param>
-		public async Task UpdateItemAsync(T item)
+		public virtual async Task UpdateItemAsync(T item)
         {
             await table.UpdateAsync(item);
         }
@@ -78,27 +107,46 @@ namespace AppServiceHelpers.Forms
 
         async Task ExecuteRefreshCommand()
         {
-            if (IsBusy)
-                return;
-
             IsBusy = true;
 
-            try
-            {
-                var _items = await table.GetItemsAsync();
-                Items.Clear();
-                foreach (var item in _items)
-                {
-                    Items.Add(item);
-                }
+			try
+			{
+				var _items = await table.GetItemsAsync();
 
-                IsBusy = false;
-            }
-            catch (Exception ex)
-            {
-                await Application.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
-            }
+				Device.BeginInvokeOnMainThread(() =>
+				{
+					Items.Clear();
+					foreach (var item in _items)
+						Items.Add(item);
+				});
+			}
+			catch (Exception ex)
+			{
+				await Application.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+			}
+			finally
+			{
+				IsBusy = false;
+			}
         }
+
+		Command<T> saveItemCommand;
+		public Command<T> SaveItemCommand
+		{
+			get { return saveItemCommand ?? (saveItemCommand = new Command<T>(async (item) => await UpdateItemAsync(item))); }
+		}
+
+		Command<T> deleteItemCommand;
+		public Command<T> DeleteItemCommand
+		{
+			get { return deleteItemCommand ?? (deleteItemCommand = new Command<T>(async (item) => await DeleteItemAsync(item))); }
+		}
+
+		Command addNewItemCommand;
+		public Command AddNewItemCommand
+		{
+			get { return addNewItemCommand ?? (addNewItemCommand = new Command(async () => await AddNewItemAsync())); }
+		}
 
         string title = string.Empty;
         public const string TitlePropertyName = "Title";
@@ -134,7 +182,7 @@ namespace AppServiceHelpers.Forms
             set { SetProperty(ref icon, value, IconPropertyName); }
         }
 
-        bool isBusy;
+		bool isBusy = false;
         /// <summary>
         /// The current state of the view.
         /// </summary>
@@ -161,8 +209,6 @@ namespace AppServiceHelpers.Forms
             string propertyName,
             Action onChanged = null)
         {
-
-
             if (EqualityComparer<T>.Default.Equals(backingStore, value))
                 return;
 

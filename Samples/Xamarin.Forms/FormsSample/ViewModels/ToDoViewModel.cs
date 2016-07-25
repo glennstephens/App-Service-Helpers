@@ -5,16 +5,22 @@ namespace FormsSample.ViewModels
 {
     public class ToDoViewModel : AppServiceHelpers.Forms.BaseAzureViewModel<Models.ToDo>
     {
-        IEasyMobileServiceClient client;
-        Models.ToDo todo;
+		readonly Models.ToDo todo;
 
-        public ToDoViewModel(IEasyMobileServiceClient client, Models.ToDo todo) : base (client)
+		public ToDoViewModel(IEasyMobileServiceClient client, Models.ToDo todo) : base (client)
         {
-            this.client = client;
             this.todo = todo;
         }
 
-        public string Text
+		public Models.ToDo Item
+		{
+			get
+			{
+				return todo;
+			}
+		}
+
+		public string Text
         {
             get
             {
@@ -22,11 +28,15 @@ namespace FormsSample.ViewModels
             }
             set
             {
-                todo.Text = value;
+				if (todo.Text != value)
+				{
+					todo.Text = value;
+					OnPropertyChanged(nameof(Text));
+				}
             }
         }
 
-        public bool Complete
+		public bool Completed
         {
             get
             {
@@ -34,12 +44,13 @@ namespace FormsSample.ViewModels
             }
             set
             {
-                todo.Completed = value;
+				if (todo.Completed != value)
+				{
+					todo.Completed = value;
+					OnPropertyChanged(nameof(Completed));
+				}
             }
         }
-
-
-
     }
 }
 

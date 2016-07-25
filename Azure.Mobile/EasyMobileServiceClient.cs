@@ -62,7 +62,7 @@ namespace AppServiceHelpers
 		/// Register a data model with EasyMobileServiceClient to create a table.
 		/// </summary>
 		/// <typeparam name="A">The data model used to create table schema.</typeparam>
-		public void RegisterTable<A>() where A : EntityData
+		public void RegisterTable<A>() where A : EntityDataAlwaysLatest
 		{
 			store.DefineTable<A>();
 
@@ -77,7 +77,7 @@ namespace AppServiceHelpers
 		/// <returns>The table.</returns>
 		/// <typeparam name="A">The data model used to create table schema.</typeparam>
 		/// <typeparam name="B">A custom implementation of BaseTableDataStore. For default behavior, use RegisterTable<A>.</typeparam>
-		public void RegisterTable<A, B>() where A : EntityData where B : BaseTableDataStore<A>, new()
+		public void RegisterTable<A, B>() where A : EntityDataAlwaysLatest where B : BaseTableDataStore<A>, new()
 		{
 			store.DefineTable<A>();
 			ServiceLocator.Instance.Add<ITableDataStore<A>, B>();
@@ -96,7 +96,7 @@ namespace AppServiceHelpers
 		/// </summary>
 		/// <returns>An ITableDataStore for CRUD operations and syncing.</returns>
 		/// <typeparam name="T">The data model for the table.</typeparam>
-		public ITableDataStore<T> Table<T>() where T : EntityData
+		public ITableDataStore<T> Table<T>() where T : EntityDataAlwaysLatest
 		{
 			var instance = ServiceLocator.Instance.Resolve<ITableDataStore<T>>();
 			if (instance != null)
@@ -108,6 +108,5 @@ namespace AppServiceHelpers
 				return tables[typeof(T).Name] as BaseTableDataStore<T>;
 			}
 		}
-		
 	}
 }

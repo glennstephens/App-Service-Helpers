@@ -8,10 +8,10 @@ namespace FormsSample.Pages
 {
     public partial class ToDoListPage : ContentPage
     {
-        public ToDoListPage(IEasyMobileServiceClient client)
+        public ToDoListPage()
         {
+			BindingContext = App.AppViewModel;
             InitializeComponent();
-            BindingContext = new ViewModels.ToDosViewModel(client);
         }
     }
 }

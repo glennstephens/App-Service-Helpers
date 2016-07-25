@@ -1,17 +1,17 @@
-﻿using System.Threading.Tasks;
-using AppServiceHelpers;
+﻿using AppServiceHelpers;
 using AppServiceHelpers.Abstractions;
-using AppServiceHelpers.Utils;
-using FormsSample.DataStores;
 using FormsSample.Models;
 using Xamarin.Forms;
 
 namespace FormsSample
 {
-    public partial class App : Application
+	public partial class App : Application
     {
+		public static ViewModels.ToDosViewModel AppViewModel;
+
         IEasyMobileServiceClient client;
-        public App()
+     
+		public App()
         {
             InitializeComponent();
 
@@ -20,7 +20,12 @@ namespace FormsSample
             client.RegisterTable<ToDo>();
             client.FinalizeSchema();
 
-            MainPage = new NavigationPage(new Pages.ToDoListPage(client));
+			AppViewModel = new ViewModels.ToDosViewModel(client);
+
+			var navPage = new NavigationPage(new Pages.ToDoListPage());
+			MainPage = navPage;
+
+			AppNavigation.Instance = new NavigationService(client, navPage);
         }
 
 
@@ -32,6 +37,7 @@ namespace FormsSample
         protected override void OnSleep()
         {
             // Handle when your app sleeps
+
         }
 
         protected override void OnResume()
