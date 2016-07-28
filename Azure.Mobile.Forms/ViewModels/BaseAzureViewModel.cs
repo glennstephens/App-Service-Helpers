@@ -11,6 +11,12 @@ using Xamarin.Forms;
 
 namespace AppServiceHelpers.Forms
 {
+	public enum UpdateMode
+	{
+		WaitForStorage,
+		NavigateImmediately
+	}
+
 	public class BaseAzureViewModel<T> : INotifyPropertyChanged where T : EntityDataAlwaysLatest
     {
         protected IEasyMobileServiceClient client;
@@ -21,10 +27,13 @@ namespace AppServiceHelpers.Forms
 		/// Initializes a new instance of the <see cref="T:Azure.Mobile.Forms.BaseAzureViewModel`1"/> class.
 		/// </summary>
 		/// <param name="client">EasyMobileServiceClient for performing table operations.</param>
-        public BaseAzureViewModel(IEasyMobileServiceClient client)
+        public BaseAzureViewModel(IEasyMobileServiceClient client, bool autoLoad = true)
         {
             this.client = client;
             table = client.Table<T>();
+
+			if (autoLoad)
+				ExecuteRefreshCommand();
         }
 
         /// <summary>
@@ -40,6 +49,20 @@ namespace AppServiceHelpers.Forms
                 OnPropertyChanged("items");
             }
         }
+
+		UpdateMode updateMode = UpdateMode.NavigateImmediately;
+
+		public UpdateMode UpdateMode
+		{
+			get
+			{
+				return this.updateMode;
+			}
+			set
+			{
+				SetProperty(ref updateMode, value, nameof(UpdateMode));
+			}
+		}
 
 		/// <summary>
 		/// Adds an item to the table.
@@ -63,12 +86,23 @@ namespace AppServiceHelpers.Forms
 		{
 			var item = (T)Activator.CreateInstance(typeof(T));
 
-			await table.AddAsync(item);
-
-			Device.BeginInvokeOnMainThread(() =>
+			if (this.UpdateMode == UpdateMode.NavigateImmediately)
 			{
-				items.Add(item);
-			});
+				table.AddAsync(item).ContinueWith((t) =>
+				{
+					Device.BeginInvokeOnMainThread(() =>
+					{
+						items.Add(item);
+					});
+				});
+			} else {
+				await table.AddAsync(item);
+
+				Device.BeginInvokeOnMainThread(() =>
+					{
+						items.Add(item);
+					});
+			}
 
 			return item;
 		}
@@ -79,12 +113,23 @@ namespace AppServiceHelpers.Forms
 		/// <param name="item">The item to delete from the table.</param>
 		public virtual async Task DeleteItemAsync(T item)
         {
-            await table.DeleteAsync(item);
-
-			Device.BeginInvokeOnMainThread(() =>
+			if (this.UpdateMode == UpdateMode.NavigateImmediately)
 			{
-				items.Remove(item);
-			});
+				Device.BeginInvokeOnMainThread(() =>
+				{
+					items.Remove(item);
+				});
+
+				table.DeleteAsync(item);
+			}
+			else {
+				await table.DeleteAsync(item);
+
+				Device.BeginInvokeOnMainThread(() =>
+						 {
+							 items.Remove(item);
+						 });
+			}
         }
 
 		/// <summary>
@@ -93,7 +138,13 @@ namespace AppServiceHelpers.Forms
 		/// <param name="item">The item to update in the table.</param>
 		public virtual async Task UpdateItemAsync(T item)
         {
-            await table.UpdateAsync(item);
+			if (this.UpdateMode == UpdateMode.NavigateImmediately)
+			{
+				table.UpdateAsync(item);
+			}
+			else {
+				await table.UpdateAsync(item);
+			}
         }
 
         /// <summary>
